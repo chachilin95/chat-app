@@ -12,8 +12,12 @@ const io = socketio(server);
 
 app.use(express.static(publicDir));
 
-io.on('connection', () => {
-    console.log('new connection!');
+io.on('connection', (socket) => {
+    socket.emit('message', 'Welcome!');
+
+    socket.on('sendMessage', (message) => {
+        io.emit('message', message);
+    });
 });
 
 module.exports = {
