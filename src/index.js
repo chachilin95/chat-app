@@ -18,12 +18,18 @@ io.on('connection', (socket) => {
     socket.emit('message', 'Welcome!');
     socket.broadcast.emit('message', 'A new user has joined!');
 
-    socket.on('sendMessage', (message) => {
+    socket.on('sendMessage', (message, callback) => {
+
+        if (util.profanityTest(message)) {
+            return callback('Profanity is not allowed...');
+        }
+
         io.emit('message', message);
     });
 
-    socket.on('sendLocation', (coordinates) => {
+    socket.on('sendLocation', (coordinates, callback) => {
         io.emit('message', util.generateGoogleMapsLink(coordinates));
+        callback('location shared!');
     });
 
     socket.on('disconnect', () => {
