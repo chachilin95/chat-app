@@ -3,6 +3,8 @@ const http = require('http');
 const express = require('express');
 const socketio = require('socket.io');
 
+const util = require('./utils');
+
 const port = process.env.PORT || 3000;
 const publicDir = path.join(__dirname, '../public');
 
@@ -20,8 +22,8 @@ io.on('connection', (socket) => {
         io.emit('message', message);
     });
 
-    socket.on('sendLocation', ({ latitude, longitude }) => {
-        socket.broadcast.emit('message', `Location: ${latitude}, ${longitude}`);
+    socket.on('sendLocation', (coordinates) => {
+        io.emit('message', util.generateGoogleMapsLink(coordinates));
     });
 
     socket.on('disconnect', () => {
