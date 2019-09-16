@@ -3,7 +3,8 @@ const http = require('http');
 const express = require('express');
 const socketio = require('socket.io');
 
-const util = require('./utils');
+const { generateLocationMessage, generateTextMessage } = require('./utils/messages');
+const { profanityTest } = require('./utils/filters');
 
 const port = process.env.PORT || 3000;
 const publicDir = path.join(__dirname, '../public');
@@ -15,29 +16,29 @@ const io = socketio(server);
 app.use(express.static(publicDir));
 
 io.on('connection', (socket) => {    
-    socket.emit('message', 'Welcome!');
-    socket.broadcast.emit('message', 'A new user has joined!');
+    socket.emit('message', generateTextMessage('Welcome!'));
+    socket.broadcast.emit('message', generateTextMessage('A new user has joined!'));
 
     // emit text message
     socket.on('sendMessage', (message, callback) => {
 
-        if (util.profanityTest(message)) {
+        if (profanityTest(message)) {
             return callback('Profanity is not allowed...');
         }
 
-        io.emit('message', message);
+        io.emit('message', generateTextMessage(message));
         callback();
     });
 
     // emit location
     socket.on('sendLocation', (coordinates, callback) => {
-        io.emit('locationMessage', util.generateGoogleMapsLink(coordinates));
+        io.emit('locationMessage', generateLocationMessage(coordinates));
         callback('location shared!');
     });
 
     // emit disconnect message
     socket.on('disconnect', () => {
-        io.emit('message', 'A user has left.');
+        io.emit('message', generateTextMessage('A user has left.'));
     });
 });
 
