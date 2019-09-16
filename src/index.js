@@ -18,6 +18,7 @@ io.on('connection', (socket) => {
     socket.emit('message', 'Welcome!');
     socket.broadcast.emit('message', 'A new user has joined!');
 
+    // emit text message
     socket.on('sendMessage', (message, callback) => {
 
         if (util.profanityTest(message)) {
@@ -28,11 +29,13 @@ io.on('connection', (socket) => {
         callback();
     });
 
+    // emit location
     socket.on('sendLocation', (coordinates, callback) => {
-        io.emit('message', util.generateGoogleMapsLink(coordinates));
+        io.emit('locationMessage', util.generateGoogleMapsLink(coordinates));
         callback('location shared!');
     });
 
+    // emit disconnect message
     socket.on('disconnect', () => {
         io.emit('message', 'A user has left.');
     });
