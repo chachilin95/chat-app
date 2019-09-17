@@ -3,7 +3,7 @@ const http = require('http');
 const express = require('express');
 const socketio = require('socket.io');
 
-const { addUser, removeUser } = require('./utils/users');
+const { addUser, removeUser, getUser } = require('./utils/users');
 const { generateLocationMessage, generateTextMessage } = require('./utils/messages');
 const { profanityTest } = require('./utils/filters');
 
@@ -17,9 +17,10 @@ const server = http.createServer(app);
 const io = socketio(server);
 
 io.on('connection', (socket) => {
+    const id = socket.id;
 
     socket.on('join', ({ username, room }, callback) => {
-        const { error, user } = addUser({ id: socket.id, username, room });
+        const { error, user } = addUser({ id, username, room });
 
         if (error) {
             return callback(error);
@@ -27,36 +28,39 @@ io.on('connection', (socket) => {
 
         socket.join(user.room);
 
-        socket.emit('message', generateTextMessage('Welcome!'));
-        socket.broadcast.to(user.room).emit('message', generateTextMessage(`${user.username} has joined!`));
+        socket.emit('message', generateTextMessage('system', 'Welcome!'));
+        socket.broadcast.to(user.room).emit('message', generateTextMessage('system', `${user.username} has joined!`));
 
         callback();
     });
 
     // emit text message
     socket.on('sendMessage', (message, callback) => {
+        const user = getUser(id);
 
         if (profanityTest(message)) {
             return callback('Profanity is not allowed...');
         }
 
-        io.emit('message', generateTextMessage(message));
+        io.to(user.room).emit('message', generateTextMessage(user.username, message));
         callback();
     });
 
     // emit location
     socket.on('sendLocation', (coordinates, callback) => {
-        io.emit('locationMessage', generateLocationMessage(coordinates));
-        callback('location shared!');
+        const user = getUser(id);
+
+        io.to(user.room).emit('locationMessage', generateLocationMessage(user.username, coordinates));
+        callback();
     });
 
     // emit disconnect message
     socket.on('disconnect', () => {
-        const removedUser = removeUser(socket.id);
+        const removedUser = removeUser(id);
         console.log('remove:', removedUser);
 
         if (removedUser) {
-            io.to(removedUser.room).emit('message', generateTextMessage(`${removedUser.username} has left the room.`));
+            io.to(removedUser.room).emit('message', generateTextMessage('system', `${removedUser.username} has left the room.`));
         }
     });
 });
