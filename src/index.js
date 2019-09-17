@@ -15,9 +15,14 @@ const io = socketio(server);
 
 app.use(express.static(publicDir));
 
-io.on('connection', (socket) => {    
-    socket.emit('message', generateTextMessage('Welcome!'));
-    socket.broadcast.emit('message', generateTextMessage('A new user has joined!'));
+io.on('connection', (socket) => {
+
+    socket.on('join', ({ username, room }) => {
+        socket.join(room);
+
+        socket.emit('message', generateTextMessage('Welcome!'));
+        socket.broadcast.to(room).emit('message', generateTextMessage(`${username} has joined!`));
+    });
 
     // emit text message
     socket.on('sendMessage', (message, callback) => {

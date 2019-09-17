@@ -11,6 +11,9 @@ const $sendLocationButton = document.querySelector('#send-location');
 const messageTemplate = document.querySelector('#message-template').innerHTML;
 const locationMessageTemplate = document.querySelector('#locationMessage-template').innerHTML;
 
+// options
+const { username, room } = Qs.parse(location.search, { ignoreQueryPrefix: true });
+
 socket.on('message', (message) => {
     const data = {
         message: message.text,
@@ -81,3 +84,6 @@ $sendLocationButton.addEventListener('click', () => {
         socket.emit('sendLocation', coordinates, acknowledgment);
     });
 });
+
+// attempt to join chat room
+socket.emit('join', { username, room });
