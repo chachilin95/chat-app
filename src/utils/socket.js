@@ -1,4 +1,4 @@
-const { addUser, removeUser, getUser } = require('./users');
+const { addUser, removeUser, getUser, getUsersInRoom } = require('./users');
 const { generateLocationMessage, generateTextMessage } = require('./messages');
 const { profanityTest } = require('./filters');
 
@@ -15,9 +15,16 @@ const setupSocketActions = (io) => {
     
             socket.join(user.room);
     
+            // welcome new user and notify others in room
             socket.emit('message', generateTextMessage('system', 'Welcome!'));
             socket.broadcast.to(user.room).emit('message', generateTextMessage('system', `${user.username} has joined!`));
-    
+            
+            // send list of users in the room
+            io.to(user.room).emit('roomData', {
+                room: user.room,
+                users: getUsersInRoom(user.room)
+            });
+
             callback();
         });
     
